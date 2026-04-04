@@ -1,0 +1,47 @@
+// https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  passwordHash String
+  createdAt    DateTime       @default(now())
+  tokens       RefreshToken[]
+  sessions     UserSession[]
+}
+
+/// Opaque refresh tokens stored server-side to enable revocation.
+/// Token rotation: each /auth/refresh invalidates the submitted token
+/// and issues a new one, making stolen tokens detectable.
+model RefreshToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+/// Tracks active gambling sessions for responsible gambling enforcement.
+/// selfExcluded flag is set when a user requests self-exclusion.
+model UserSession {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startedAt    DateTime  @default(now())
+  endedAt      DateTime?
+  selfExcluded Boolean   @default(false)
+
+  @@index([userId])
+}

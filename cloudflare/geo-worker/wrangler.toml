@@ -1,0 +1,6 @@
+name = "geo-worker"
+main = "src/index.ts"
+compatibility_date = "2024-01-15"
+
+# [vars]
+# ALLOWED_COUNTRIES = "US,GB,DE"

@@ -1,0 +1,28 @@
+# Claude Code context (local only)
+CLAUDE.md
+
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+dist
+.next
+.turbo
+
+# Environment files — keep .env.example committed
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE
+.idea
+*.iml
