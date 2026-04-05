@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-canvas text-ink font-mono;
+  }
+
+  * {
+    @apply border-frame;
+  }
+
+  ::selection {
+    @apply bg-accent text-canvas;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-1 ring-accent;
+  }
+}
+
+@layer utilities {
+  .flash-up {
+    color: #6ee7b7;
+    transition: color 1s ease-out;
+  }
+  .flash-down {
+    color: #f87171;
+    transition: color 1s ease-out;
+  }
+}

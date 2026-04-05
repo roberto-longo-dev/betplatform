@@ -37,11 +37,20 @@ const oddsRoute: FastifyPluginAsync = async (fastify) => {
 
   fastify.get('/live', { websocket: true }, async (socket, request) => {
     // ── Authentication ──────────────────────────────────────────────────────
-    // JWT is verified against the Authorization header sent during the HTTP
-    // upgrade handshake — standard Bearer token, same as REST endpoints.
+    // Browser WebSocket API cannot set custom headers, so we accept the JWT
+    // via ?token= query param as a fallback alongside the Authorization header.
+    const authHeader = request.headers.authorization
+    const queryToken = (request.query as Record<string, string | undefined>)['token']
+    const rawToken = authHeader?.replace('Bearer ', '') ?? queryToken
+
+    if (!rawToken) {
+      socket.close(1008, 'Unauthorized')
+      return
+    }
+
     let userId: string
     try {
-      const payload = await request.jwtVerify<{ sub: string }>()
+      const payload = fastify.jwt.verify<{ sub: string }>(rawToken)
       userId = payload.sub
     } catch {
       socket.close(1008, 'Unauthorized')
