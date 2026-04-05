@@ -1,4 +1,5 @@
 import Fastify, { type FastifyError } from 'fastify'
+import websocketPlugin from '@fastify/websocket'
 import { config } from './config'
 import prismaPlugin from './plugins/prisma'
 import redisPlugin from './plugins/redis'
@@ -7,6 +8,7 @@ import rateLimitPlugin from './plugins/rate-limit'
 import jwtPlugin from './plugins/jwt'
 import healthRoute from './routes/health'
 import authRoute from './routes/auth'
+import oddsRoute from './routes/odds'
 
 export async function buildApp() {
   const app = Fastify({
@@ -19,6 +21,7 @@ export async function buildApp() {
   // swagger must come before routes so route schemas are picked up.
   // rate-limit and jwt must be registered with fastify-plugin (scoped to root) before routes.
   await app.register(swaggerPlugin)
+  await app.register(websocketPlugin)
   await app.register(rateLimitPlugin)
   await app.register(jwtPlugin)
   await app.register(prismaPlugin)
@@ -43,6 +46,7 @@ export async function buildApp() {
   // Routes
   await app.register(healthRoute)
   await app.register(authRoute, { prefix: '/auth' })
+  await app.register(oddsRoute, { prefix: '/odds' })
 
   return app
 }

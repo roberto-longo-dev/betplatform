@@ -24,4 +24,6 @@ export const config = {
     host: process.env['HOST'] ?? '0.0.0.0',
     logLevel: process.env['LOG_LEVEL'] ?? 'info',
   },
+  // Optional — falls back to mock odds data when absent
+  oddsApiKey: process.env['ODDS_API_KEY'] ?? null,
 }
