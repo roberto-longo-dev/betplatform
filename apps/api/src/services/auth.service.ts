@@ -58,12 +58,15 @@ export class AuthService {
 
     const tokens = await this.issueTokens(user.id, user.email)
 
-    await this.sessions.setSession(user.id, {
-      userId: user.id,
-      email: user.email,
-      loginAt: new Date().toISOString(),
-      ip,
-    })
+    await Promise.all([
+      this.sessions.setSession(user.id, {
+        userId: user.id,
+        email: user.email,
+        loginAt: new Date().toISOString(),
+        ip,
+      }),
+      this.prisma.userSession.create({ data: { userId: user.id } }),
+    ])
 
     return tokens
   }
@@ -103,12 +106,17 @@ export class AuthService {
       throw createError('Invalid refresh token', 401)
     }
 
-    await this.prisma.refreshToken.update({
-      where: { id: stored.id },
-      data: { revokedAt: new Date() },
-    })
-
-    await this.sessions.deleteSession(stored.userId)
+    await Promise.all([
+      this.prisma.refreshToken.update({
+        where: { id: stored.id },
+        data: { revokedAt: new Date() },
+      }),
+      this.prisma.userSession.updateMany({
+        where: { userId: stored.userId, endedAt: null },
+        data: { endedAt: new Date() },
+      }),
+      this.sessions.deleteSession(stored.userId),
+    ])
   }
 
   private async issueTokens(userId: string, email: string): Promise<TokenPair> {

@@ -9,6 +9,7 @@ import jwtPlugin from './plugins/jwt'
 import healthRoute from './routes/health'
 import authRoute from './routes/auth'
 import oddsRoute from './routes/odds'
+import rgRoute from './routes/responsible-gambling'
 
 export async function buildApp() {
   const app = Fastify({
@@ -47,6 +48,7 @@ export async function buildApp() {
   await app.register(healthRoute)
   await app.register(authRoute, { prefix: '/auth' })
   await app.register(oddsRoute, { prefix: '/odds' })
+  await app.register(rgRoute, { prefix: '/responsible-gambling' })
 
   return app
 }
