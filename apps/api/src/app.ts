@@ -10,6 +10,7 @@ import healthRoute from './routes/health'
 import authRoute from './routes/auth'
 import oddsRoute from './routes/odds'
 import rgRoute from './routes/responsible-gambling'
+import { sessionGuard } from './middleware/session-guard'
 
 export async function buildApp() {
   const app = Fastify({
@@ -47,8 +48,13 @@ export async function buildApp() {
   // Routes
   await app.register(healthRoute)
   await app.register(authRoute, { prefix: '/auth' })
-  await app.register(oddsRoute, { prefix: '/odds' })
-  await app.register(rgRoute, { prefix: '/responsible-gambling' })
+
+  // Protected routes — sessionGuard enforces 4-hour session limit on all of these
+  await app.register(async (protected_) => {
+    protected_.addHook('preHandler', sessionGuard)
+    await protected_.register(oddsRoute, { prefix: '/odds' })
+    await protected_.register(rgRoute, { prefix: '/responsible-gambling' })
+  })
 
   return app
 }

@@ -1,5 +1,4 @@
 import { type FastifyPluginAsync } from 'fastify'
-import { sessionGuard } from '../middleware/session-guard'
 import {
   ResponsibleGamblingService,
   type ExclusionDuration,
@@ -29,9 +28,6 @@ const errorResponse = {
 }
 
 const rgRoute: FastifyPluginAsync = async (fastify) => {
-  // Session guard applies to every route in this plugin
-  fastify.addHook('preHandler', sessionGuard)
-
   const service = new ResponsibleGamblingService(fastify.prisma, fastify.redis)
 
   // ── POST /responsible-gambling/self-exclude ──────────────────────────────
