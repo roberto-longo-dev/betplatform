@@ -24,6 +24,9 @@
     "fastify-plugin": "^5.0.0",
     "ioredis": "^5.10.1"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/node": "^22.10.0",

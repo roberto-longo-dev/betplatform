@@ -1,4 +1,5 @@
 import Fastify, { type FastifyError } from 'fastify'
+import corsPlugin from '@fastify/cors'
 import websocketPlugin from '@fastify/websocket'
 import { config } from './config'
 import prismaPlugin from './plugins/prisma'
@@ -18,6 +19,14 @@ export async function buildApp() {
     logger: {
       level: config.server.logLevel,
     },
+  })
+
+  // CORS first — must run before any route or plugin that sends responses
+  await app.register(corsPlugin, {
+    origin: process.env['CORS_ORIGIN'] ?? 'http://localhost:3000',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
   })
 
   // Plugins — order matters:
