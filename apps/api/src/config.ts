@@ -13,6 +13,9 @@ export const config = {
   database: {
     url: requireEnv('DATABASE_URL'),
   },
+  redis: {
+    url: requireEnv('REDIS_URL'),
+  },
   jwt: {
     secret: requireEnv('JWT_SECRET'),
   },

@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt'
 import { randomBytes } from 'node:crypto'
 import { type PrismaClient } from '@prisma/client'
+import { type SessionService } from './session.service'
 
 const BCRYPT_ROUNDS = 12
 const REFRESH_TOKEN_BYTES = 40
@@ -26,6 +27,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly sign: SignFn,
+    private readonly sessions: SessionService,
   ) {}
 
   async register(email: string, password: string) {
@@ -41,7 +43,7 @@ export class AuthService {
     })
   }
 
-  async login(email: string, password: string): Promise<TokenPair> {
+  async login(email: string, password: string, ip: string): Promise<TokenPair> {
     const user = await this.prisma.user.findUnique({ where: { email } })
 
     // Always run bcrypt regardless of whether the user exists.
@@ -54,7 +56,16 @@ export class AuthService {
       throw createError('Invalid credentials', 401)
     }
 
-    return this.issueTokens(user.id, user.email)
+    const tokens = await this.issueTokens(user.id, user.email)
+
+    await this.sessions.setSession(user.id, {
+      userId: user.id,
+      email: user.email,
+      loginAt: new Date().toISOString(),
+      ip,
+    })
+
+    return tokens
   }
 
   async refresh(oldToken: string): Promise<TokenPair> {
@@ -75,7 +86,12 @@ export class AuthService {
       data: { revokedAt: new Date() },
     })
 
-    return this.issueTokens(stored.user.id, stored.user.email)
+    const tokens = await this.issueTokens(stored.user.id, stored.user.email)
+
+    // Reset session TTL — user is still active
+    await this.sessions.extendSession(stored.user.id)
+
+    return tokens
   }
 
   async logout(token: string): Promise<void> {
@@ -91,6 +107,8 @@ export class AuthService {
       where: { id: stored.id },
       data: { revokedAt: new Date() },
     })
+
+    await this.sessions.deleteSession(stored.userId)
   }
 
   private async issueTokens(userId: string, email: string): Promise<TokenPair> {

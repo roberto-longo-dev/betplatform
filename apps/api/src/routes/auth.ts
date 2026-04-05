@@ -1,5 +1,6 @@
 import { type FastifyPluginAsync } from 'fastify'
 import { AuthService } from '../services/auth.service'
+import { SessionService } from '../services/session.service'
 import {
   registerBody,
   loginBody,
@@ -19,6 +20,7 @@ const authRoute: FastifyPluginAsync = async (fastify) => {
   const service = new AuthService(
     fastify.prisma,
     (payload, opts) => fastify.jwt.sign(payload, opts),
+    new SessionService(fastify.redis),
   )
 
   fastify.post<{ Body: RegisterBody }>('/register', {
@@ -62,7 +64,7 @@ const authRoute: FastifyPluginAsync = async (fastify) => {
       },
     },
     handler: async (request, reply) => {
-      const tokens = await service.login(request.body.email, request.body.password)
+      const tokens = await service.login(request.body.email, request.body.password, request.ip)
       return reply.code(200).send(tokens)
     },
   })

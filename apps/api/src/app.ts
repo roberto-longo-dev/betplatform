@@ -1,6 +1,7 @@
 import Fastify, { type FastifyError } from 'fastify'
 import { config } from './config'
 import prismaPlugin from './plugins/prisma'
+import redisPlugin from './plugins/redis'
 import swaggerPlugin from './plugins/swagger'
 import rateLimitPlugin from './plugins/rate-limit'
 import jwtPlugin from './plugins/jwt'
@@ -21,6 +22,7 @@ export async function buildApp() {
   await app.register(rateLimitPlugin)
   await app.register(jwtPlugin)
   await app.register(prismaPlugin)
+  await app.register(redisPlugin)
 
   // Consistent error shape across all failure modes
   app.setErrorHandler<FastifyError>(async (error, _request, reply) => {
