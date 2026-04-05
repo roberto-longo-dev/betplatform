@@ -1,20 +1,53 @@
 /**
  * geo-worker — Cloudflare Worker for geoblocking
  *
- * TODO: Read CF-IPCountry header and deny requests from blocked regions.
- * Cloudflare sets CF-IPCountry on every incoming request at the edge.
+ * Intercepts all requests at the edge before they reach the Railway API.
+ * Allowed countries are defined as a static set — no env var needed,
+ * changes require a redeploy (intentional: avoids runtime misconfiguration).
+ *
+ * CF-IPCountry is a two-letter ISO 3166-1 alpha-2 code added automatically
+ * by Cloudflare on every request. Value is "T1" for Tor exit nodes.
  */
 
+const ALLOWED_COUNTRIES = new Set(['IT', 'GB', 'MT', 'ES', 'DE', 'AT', 'CH'])
+
 export default {
-  async fetch(_request: Request, _env: Env, _ctx: ExecutionContext): Promise<Response> {
-    // Placeholder — geoblocking logic to be implemented
-    return new Response(JSON.stringify({ message: 'geo-worker placeholder' }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    })
+  async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
+    const url = new URL(request.url)
+
+    // /health bypasses geoblocking — Railway uses this for container health checks.
+    // If geoblocking blocked it, Railway would think the service is down.
+    if (url.pathname === '/health') {
+      return new Response(JSON.stringify({ status: 'ok' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    const country = request.headers.get('CF-IPCountry') ?? ''
+
+    if (!country || !ALLOWED_COUNTRIES.has(country)) {
+      return new Response(
+        JSON.stringify({
+          error: 'Service not available in your region',
+          country: country || 'unknown',
+        }),
+        {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
+    // Forward allowed request to origin, preserving method, headers, and body.
+    // Reconstruct the URL against ORIGIN_URL to avoid sending the worker's
+    // hostname to the Railway API.
+    const targetUrl = new URL(url.pathname + url.search, env.ORIGIN_URL)
+    return fetch(new Request(targetUrl.toString(), request))
   },
 }
 
 interface Env {
-  // ALLOWED_COUNTRIES: string  // comma-separated ISO-3166-1 alpha-2 codes
+  /** Base URL of the Railway API, e.g. https://betplatform-api.up.railway.app */
+  ORIGIN_URL: string
 }

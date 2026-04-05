@@ -1,6 +1,17 @@
 name = "geo-worker"
 main = "src/index.ts"
-compatibility_date = "2024-01-15"
+compatibility_date = "2024-09-23"
 
-# [vars]
-# ALLOWED_COUNTRIES = "US,GB,DE"
+# ORIGIN_URL is set as a secret in production — never commit real values.
+# Run: wrangler secret put ORIGIN_URL
+# Then enter: https://your-app.up.railway.app
+#
+# For local dev, create cloudflare/geo-worker/.dev.vars (gitignored):
+#   ORIGIN_URL=http://localhost:3001
+[vars]
+ORIGIN_URL = "http://localhost:3001"
+
+# Uncomment and configure when deploying to a custom domain:
+# routes = [
+#   { pattern = "api.yourdomain.com/*", zone_name = "yourdomain.com" }
+# ]
