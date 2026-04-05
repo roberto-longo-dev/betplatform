@@ -1,6 +1,7 @@
 import { type FastifyPluginAsync } from 'fastify'
 import { AuthService } from '../services/auth.service'
 import { SessionService } from '../services/session.service'
+import { AuditService } from '../services/audit.service'
 import {
   registerBody,
   loginBody,
@@ -21,6 +22,7 @@ const authRoute: FastifyPluginAsync = async (fastify) => {
     fastify.prisma,
     (payload, opts) => fastify.jwt.sign(payload, opts),
     new SessionService(fastify.redis),
+    new AuditService(fastify.prisma),
   )
 
   fastify.post<{ Body: RegisterBody }>('/register', {

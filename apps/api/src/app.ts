@@ -10,6 +10,7 @@ import healthRoute from './routes/health'
 import authRoute from './routes/auth'
 import oddsRoute from './routes/odds'
 import rgRoute from './routes/responsible-gambling'
+import auditRoute from './routes/audit'
 import { sessionGuard } from './middleware/session-guard'
 
 export async function buildApp() {
@@ -54,6 +55,7 @@ export async function buildApp() {
     protected_.addHook('preHandler', sessionGuard)
     await protected_.register(oddsRoute, { prefix: '/odds' })
     await protected_.register(rgRoute, { prefix: '/responsible-gambling' })
+    await protected_.register(auditRoute, { prefix: '/audit' })
   })
 
   return app

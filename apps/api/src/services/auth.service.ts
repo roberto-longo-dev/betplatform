@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt'
 import { randomBytes } from 'node:crypto'
 import { type PrismaClient } from '@prisma/client'
 import { type SessionService } from './session.service'
+import { AuditService, AuditAction } from './audit.service'
 
 const BCRYPT_ROUNDS = 12
 const REFRESH_TOKEN_BYTES = 40
@@ -28,6 +29,7 @@ export class AuthService {
     private readonly prisma: PrismaClient,
     private readonly sign: SignFn,
     private readonly sessions: SessionService,
+    private readonly audit: AuditService,
   ) {}
 
   async register(email: string, password: string) {
@@ -37,10 +39,12 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS)
-    return this.prisma.user.create({
+    const user = await this.prisma.user.create({
       data: { email, passwordHash },
       select: { id: true, email: true, createdAt: true },
     })
+    void this.audit.log({ userId: user.id, action: AuditAction.REGISTER })
+    return user
   }
 
   async login(email: string, password: string, ip: string): Promise<TokenPair> {
@@ -53,6 +57,12 @@ export class AuthService {
     const valid = await bcrypt.compare(password, hash)
 
     if (!user || !valid) {
+      void this.audit.log({
+        userId: user?.id,
+        action: AuditAction.FAILED_LOGIN,
+        ipAddress: ip,
+        metadata: { reason: user ? 'invalid_password' : 'email_not_found' },
+      })
       throw createError('Invalid credentials', 401)
     }
 
@@ -68,6 +78,7 @@ export class AuthService {
       this.prisma.userSession.create({ data: { userId: user.id } }),
     ])
 
+    void this.audit.log({ userId: user.id, action: AuditAction.LOGIN, ipAddress: ip })
     return tokens
   }
 
@@ -94,6 +105,7 @@ export class AuthService {
     // Reset session TTL — user is still active
     await this.sessions.extendSession(stored.user.id)
 
+    void this.audit.log({ userId: stored.user.id, action: AuditAction.REFRESH_TOKEN })
     return tokens
   }
 
@@ -117,6 +129,8 @@ export class AuthService {
       }),
       this.sessions.deleteSession(stored.userId),
     ])
+
+    void this.audit.log({ userId: stored.userId, action: AuditAction.LOGOUT })
   }
 
   private async issueTokens(userId: string, email: string): Promise<TokenPair> {

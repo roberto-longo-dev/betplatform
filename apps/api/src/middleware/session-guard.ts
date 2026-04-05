@@ -1,4 +1,5 @@
 import { type FastifyRequest, type FastifyReply } from 'fastify'
+import { AuditService, AuditAction } from '../services/audit.service'
 
 const SESSION_LIMIT_MS = 4 * 60 * 60 * 1_000 // 4 hours
 
@@ -45,6 +46,12 @@ export async function sessionGuard(
     }),
     request.server.redis.del(`session:${userId}`),
   ])
+
+  void new AuditService(request.server.prisma).log({
+    userId,
+    action: AuditAction.SESSION_TIMEOUT,
+    ipAddress: request.ip,
+  })
 
   await reply.code(401).send({
     error: 'Session limit reached',

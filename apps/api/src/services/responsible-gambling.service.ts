@@ -1,5 +1,6 @@
 import { type PrismaClient } from '@prisma/client'
 import { type Redis } from 'ioredis'
+import { AuditAction } from './audit.service'
 
 export type ExclusionDuration = '24h' | '7d' | '30d' | '6m' | '1y' | 'permanent'
 export type DepositPeriod = 'daily' | 'weekly' | 'monthly'
@@ -60,7 +61,7 @@ export class ResponsibleGamblingService {
       this.prisma.auditLog.create({
         data: {
           userId,
-          action: 'SELF_EXCLUSION',
+          action: AuditAction.SELF_EXCLUSION,
           ipAddress,
           metadata: {
             duration,
@@ -104,7 +105,7 @@ export class ResponsibleGamblingService {
         this.prisma.auditLog.create({
           data: {
             userId,
-            action: 'DEPOSIT_LIMIT_SET',
+            action: AuditAction.DEPOSIT_LIMIT_SET,
             amount,
             metadata: { period },
           },
@@ -131,7 +132,7 @@ export class ResponsibleGamblingService {
       this.prisma.auditLog.create({
         data: {
           userId,
-          action: 'DEPOSIT_LIMIT_PENDING',
+          action: AuditAction.DEPOSIT_LIMIT_PENDING,
           amount,
           metadata: { period, pendingFrom: pendingFrom.toISOString() },
         },
