@@ -58,11 +58,19 @@ betplatform/
 
 **Problem:** Most platforms implement geo-restrictions inside the application. Restricted traffic still reaches the server, consuming CPU, database connections, and bandwidth.
 
-**Decision:** Geoblocking runs in a Cloudflare Worker — before the request reaches Railway. The Worker reads the `CF-IPCountry` header (added automatically by Cloudflare) and returns 403 immediately for unlicensed jurisdictions.
+**Decision:** Geoblocking runs in a Cloudflare Worker — before the request reaches Railway. The Worker reads the `CF-IPCountry` header (added automatically by Cloudflare) and returns 403 immediately for blocked jurisdictions.
 
 **Result:** Zero infrastructure exposure from restricted traffic. Block latency drops from 200–500ms (application layer) to 5–10ms (edge).
 
-**Why ALLOWED_COUNTRIES is a static set, not an env var:** Runtime misconfiguration of a compliance-critical list is a worse failure mode than requiring a redeploy to change it.
+**Allowlist vs. blocklist — knowing when to use each:**
+
+A production gambling platform would use an **allowlist**: only explicitly licensed jurisdictions are permitted, everything else is blocked by default. This is the legally correct posture — gambling licenses are jurisdiction-specific, and operating without one is a liability.
+
+This portfolio demo uses a **blocklist**: only sanctioned and high-risk countries are blocked (KP, IR, CU, SY, RU, BY); all other traffic is allowed. This is a deliberate tradeoff — it demonstrates the same edge enforcement architecture while maximising recruiter visibility across geographies.
+
+The distinction matters: implementing geoblocking is straightforward; knowing *which* model fits the compliance context is the actual engineering judgement.
+
+**Why the blocked-country list is a static set, not an env var:** Runtime misconfiguration of a compliance-critical list is a worse failure mode than requiring a redeploy to change it.
 
 ---
 
@@ -204,9 +212,13 @@ cd apps/web && pnpm dev
 # Cloudflare Worker (port 8787)
 cd cloudflare/geo-worker && npx wrangler dev
 
-# Test geoblocking
+# Test geoblocking — blocked country
+curl -H "CF-IPCountry: RU" http://localhost:8787/test
+# → 403 {"error":"Service not available in your region","country":"RU"}
+
+# Test geoblocking — allowed country
 curl -H "CF-IPCountry: US" http://localhost:8787/test
-# → 403 {"error":"Service not available in your region","country":"US"}
+# → forwarded to origin
 
 curl -H "CF-IPCountry: IT" http://localhost:8787/health
 # → 200 {"status":"ok"}
