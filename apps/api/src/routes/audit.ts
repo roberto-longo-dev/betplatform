@@ -63,7 +63,7 @@ const auditRoute: FastifyPluginAsync = async (fastify) => {
 
       return reply.code(200).send({
         total,
-        logs: entries.map((e) => ({
+        logs: entries.map((e: typeof entries[number]) => ({
           ...e,
           amount: e.amount?.toNumber() ?? null,
         })),

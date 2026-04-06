@@ -51,7 +51,7 @@ export class AuditService {
           amount:        entry.amount,
           balanceBefore: entry.balanceBefore,
           balanceAfter:  entry.balanceAfter,
-          metadata:      entry.metadata as Prisma.InputJsonValue | undefined,
+          metadata:      entry.metadata as Prisma.JsonObject | undefined,
           ipAddress:     entry.ipAddress,
           userAgent:     entry.userAgent,
         },
