@@ -66,6 +66,16 @@ export class AuthService {
       throw createError('Invalid credentials', 401)
     }
 
+    if (user.selfExcluded) {
+      const until = user.excludedUntil
+      throw createError(
+        until
+          ? `Account excluded until ${until.toISOString()}`
+          : 'Account permanently excluded',
+        403,
+      )
+    }
+
     const tokens = await this.issueTokens(user.id, user.email)
 
     await Promise.all([
