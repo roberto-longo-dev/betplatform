@@ -12,6 +12,7 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@fastify/cors": "^11.2.0",
     "@fastify/jwt": "^9.0.0",
     "@fastify/rate-limit": "^10.1.0",
     "@fastify/swagger": "^9.1.0",
