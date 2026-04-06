@@ -8,8 +8,6 @@ compatibility_date = "2024-09-23"
 #
 # For local dev, create cloudflare/geo-worker/.dev.vars (gitignored):
 #   ORIGIN_URL=http://localhost:3001
-[vars]
-ORIGIN_URL = "http://localhost:3001"
 
 # Uncomment and configure when deploying to a custom domain:
 # routes = [
