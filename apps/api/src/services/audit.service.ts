@@ -1,4 +1,4 @@
-import { type PrismaClient, Prisma } from '@prisma/client'
+import { type PrismaClient } from '@prisma/client'
 
 /**
  * String enum so values are readable in the database and in logs.
@@ -51,7 +51,8 @@ export class AuditService {
           amount:        entry.amount,
           balanceBefore: entry.balanceBefore,
           balanceAfter:  entry.balanceAfter,
-          metadata:      entry.metadata as Prisma.JsonObject | undefined,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          metadata:      entry.metadata as any,
           ipAddress:     entry.ipAddress,
           userAgent:     entry.userAgent,
         },
