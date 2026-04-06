@@ -2,14 +2,25 @@
  * geo-worker — Cloudflare Worker for geoblocking
  *
  * Intercepts all requests at the edge before they reach the Railway API.
- * Allowed countries are defined as a static set — no env var needed,
+ * Blocked countries are defined as a static set — no env var needed,
  * changes require a redeploy (intentional: avoids runtime misconfiguration).
+ *
+ * Portfolio demo — block only sanctioned/high-risk countries.
+ * A real gambling platform would invert this logic to allowlist
+ * licensed jurisdictions only.
  *
  * CF-IPCountry is a two-letter ISO 3166-1 alpha-2 code added automatically
  * by Cloudflare on every request. Value is "T1" for Tor exit nodes.
  */
 
-const ALLOWED_COUNTRIES = new Set(['IT', 'GB', 'MT', 'ES', 'DE', 'AT', 'CH'])
+const BLOCKED_COUNTRIES = new Set([
+  'KP', // North Korea
+  'IR', // Iran
+  'CU', // Cuba
+  'SY', // Syria
+  'RU', // Russia
+  'BY', // Belarus
+])
 
 export default {
   async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
@@ -24,13 +35,13 @@ export default {
       })
     }
 
-    const country = request.headers.get('CF-IPCountry') ?? ''
+    const country = request.headers.get('CF-IPCountry')
 
-    if (!country || !ALLOWED_COUNTRIES.has(country)) {
+    if (country && BLOCKED_COUNTRIES.has(country)) {
       return new Response(
         JSON.stringify({
           error: 'Service not available in your region',
-          country: country || 'unknown',
+          country,
         }),
         {
           status: 403,
