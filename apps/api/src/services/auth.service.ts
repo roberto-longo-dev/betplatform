@@ -68,12 +68,21 @@ export class AuthService {
 
     if (user.selfExcluded) {
       const until = user.excludedUntil
-      throw createError(
-        until
-          ? `Account excluded until ${until.toISOString()}`
-          : 'Account permanently excluded',
-        403,
-      )
+
+      if (until !== null && until <= new Date()) {
+        // Exclusion period has expired — lift it lazily at login time.
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { selfExcluded: false, excludedUntil: null },
+        })
+      } else {
+        throw createError(
+          until
+            ? `Account excluded until ${until.toISOString()}`
+            : 'Account permanently excluded',
+          403,
+        )
+      }
     }
 
     const tokens = await this.issueTokens(user.id, user.email)
