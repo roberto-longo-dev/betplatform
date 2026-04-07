@@ -14,7 +14,9 @@ interface DepositLimitBody {
   period: DepositPeriod
 }
 
-const EXCLUSION_DURATIONS: ExclusionDuration[] = ['24h', '7d', '30d', '6m', '1y', 'permanent']
+// '2m' is listed first so it appears at the top of the Swagger UI dropdown —
+// testers can trigger the full exclusion flow without waiting 24 hours.
+const EXCLUSION_DURATIONS: ExclusionDuration[] = ['2m', '24h', '7d', '30d', '6m', '1y', 'permanent']
 const DEPOSIT_PERIODS: DepositPeriod[] = ['daily', 'weekly', 'monthly']
 
 const errorResponse = {
@@ -38,7 +40,11 @@ const rgRoute: FastifyPluginAsync = async (fastify) => {
       description:
         'Immediately excludes the user for the requested duration. ' +
         'All active tokens are revoked and all sessions are terminated. ' +
-        'For permanent exclusions, excludedUntil is null.',
+        'For permanent exclusions, excludedUntil is null.\n\n' +
+        '**Demo note:** `2m` (2 minutes) is a demo-only duration that lets you observe ' +
+        'the full exclusion flow — login blocked, session evicted, WebSocket closed — ' +
+        'without waiting 24 hours. A real platform would offer only regulatory durations ' +
+        '(24h and above).',
       body: {
         type: 'object',
         required: ['duration'],

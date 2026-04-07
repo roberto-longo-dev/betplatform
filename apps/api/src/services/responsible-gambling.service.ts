@@ -2,7 +2,10 @@ import { type PrismaClient } from '@prisma/client'
 import { type Redis } from 'ioredis'
 import { AuditAction } from './audit.service'
 
-export type ExclusionDuration = '24h' | '7d' | '30d' | '6m' | '1y' | 'permanent'
+// '2m' is a demo-only duration so recruiters can observe the full self-exclusion
+// flow (block on login, Redis eviction, WebSocket close) without waiting 24 hours.
+// A production platform would remove '2m' and keep only real regulatory durations.
+export type ExclusionDuration = '2m' | '24h' | '7d' | '30d' | '6m' | '1y' | 'permanent'
 export type DepositPeriod = 'daily' | 'weekly' | 'monthly'
 
 const COOLING_OFF_DAYS = 7
@@ -10,6 +13,7 @@ const COOLING_OFF_DAYS = 7
 function resolveExclusionEnd(duration: ExclusionDuration): Date | null {
   const now = new Date()
   switch (duration) {
+    case '2m':  return new Date(now.getTime() + 2 * 60 * 1_000) // demo only
     case '24h': return new Date(now.getTime() + 24 * 60 * 60 * 1_000)
     case '7d':  return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1_000)
     case '30d': return new Date(now.getTime() + 30 * 24 * 60 * 60 * 1_000)
