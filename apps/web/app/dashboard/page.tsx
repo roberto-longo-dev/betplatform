@@ -84,7 +84,7 @@ export default function DashboardPage() {
       const res = await fetch(`${API}/responsible-gambling/self-exclude`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ duration: '24h' }),
+        body: JSON.stringify({ duration: '2m' }),
       })
       if (!res.ok) {
         const d = await res.json() as { message?: string }
@@ -243,14 +243,14 @@ export default function DashboardPage() {
               {/* Self-exclude */}
               <div className="border-t border-frame pt-4">
                 <p className="text-xs text-muted mb-2">
-                  Self-exclude for 24 hours. All tokens will be revoked.
+                  Demo: self-exclude for 2 minutes (a real platform uses 24h minimum). All tokens will be revoked.
                 </p>
                 <button
                   onClick={handleSelfExclude}
                   disabled={rgLoading}
                   className="w-full border border-red-900 text-red-400 py-2 rounded-lg text-sm hover:bg-red-950/30 disabled:opacity-50 transition-colors"
                 >
-                  {rgLoading ? 'Processing…' : 'Self-exclude (24h)'}
+                  {rgLoading ? 'Processing…' : 'Self-exclude (2 min demo)'}
                 </button>
               </div>
             </div>
